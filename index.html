@@ -1,17 +1,199 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Ranking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIO App Ranking</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --text: #18202a;
+      --muted: #647084;
+      --line: #d9dee7;
+      --accent: #0f766e;
+      --accent-dark: #115e59;
+      --danger: #b42318;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+      min-height: 20px;
+      text-align: right;
+    }
+
+    main {
+      padding: 24px 0 40px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+
+    button {
+      border: 1px solid var(--accent-dark);
+      border-radius: 6px;
+      background: var(--accent);
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 9px 14px;
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    .table-panel {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      min-width: 620px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px 14px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #eef2f6;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    td {
+      font-size: 14px;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .rank {
+      width: 72px;
+      font-weight: 700;
+    }
+
+    .score {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .status {
+        text-align: left;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Ranking</h1>
-  <ul id="list"></ul>
+  <header>
+    <div class="wrap topbar">
+      <h1>FIO App Ranking</h1>
+      <div id="status" class="status">Loading...</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="actions">
+      <button id="refreshBtn" type="button">Refresh</button>
+    </div>
+
+    <section class="table-panel">
+      <table>
+        <thead>
+          <tr>
+            <th class="rank">Rank</th>
+            <th>Model</th>
+            <th>Device</th>
+            <th>Score</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="rankingBody">
+          <tr>
+            <td colspan="5" class="muted">Loading ranking data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
 
   <script type="module">
-    // Firebase SDK import
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      limit,
+      orderBy,
+      query,
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDWoXWLjt9Y0GtnVJ902Sj3zlhOcewebPI",
@@ -22,28 +204,98 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    const statusEl = document.getElementById("status");
+    const rankingBody = document.getElementById("rankingBody");
+    const refreshBtn = document.getElementById("refreshBtn");
+
+    refreshBtn.addEventListener("click", loadRanking);
+
     async function loadRanking() {
-      const q = query(
-        collection(db, "scores"),
-        orderBy("score", "desc")
-      );
+      setLoading(true);
 
-      const querySnapshot = await getDocs(q);
+      try {
+        const rankingQuery = query(
+          collection(db, "fio_results"),
+          orderBy("score", "desc"),
+          limit(100),
+        );
 
-      const list = document.getElementById("list");
-      list.innerHTML = "";
+        const snapshot = await getDocs(rankingQuery);
+        const rows = [];
 
-      let rank = 1;
+        snapshot.forEach((doc) => {
+          rows.push({
+            id: doc.id,
+            ...doc.data(),
+          });
+        });
 
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
+        renderRanking(rows);
+        statusEl.textContent = `Loaded ${rows.length} submissions`;
+        statusEl.classList.remove("error");
+      } catch (error) {
+        console.error(error);
+        rankingBody.innerHTML = `<tr><td colspan="5" class="error">${escapeHtml(error.message)}</td></tr>`;
+        statusEl.textContent = "Load failed";
+        statusEl.classList.add("error");
+      } finally {
+        setLoading(false);
+      }
+    }
 
-        const li = document.createElement("li");
-        li.textContent = `${rank}등 - ${data.deviceId} : ${data.score}`;
-        
-        list.appendChild(li);
-        rank++;
-      });
+    function renderRanking(rows) {
+      if (!rows.length) {
+        rankingBody.innerHTML = `<tr><td colspan="5" class="muted">No submissions yet.</td></tr>`;
+        return;
+      }
+
+      rankingBody.innerHTML = rows.map((row, index) => `
+        <tr>
+          <td class="rank">${index + 1}</td>
+          <td>${escapeHtml(row.model || "-")}</td>
+          <td>${escapeHtml(row.device || "-")}</td>
+          <td class="score">${formatScore(row.score)}</td>
+          <td>${escapeHtml(formatDate(row.timestamp, row.timestamp_ms))}</td>
+        </tr>
+      `).join("");
+    }
+
+    function setLoading(isLoading) {
+      refreshBtn.disabled = isLoading;
+      if (isLoading) {
+        statusEl.textContent = "Loading...";
+        statusEl.classList.remove("error");
+      }
+    }
+
+    function formatScore(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return "-";
+      return Math.round(number).toLocaleString("en-US");
+    }
+
+    function formatDate(timestamp, timestampMs) {
+      if (timestamp && /^\d{8}_/.test(timestamp)) {
+        return `${timestamp.slice(0, 4)}-${timestamp.slice(4, 6)}-${timestamp.slice(6, 8)}`;
+      }
+
+      if (timestamp) return timestamp.split(" ")[0];
+
+      const millis = Number(timestampMs);
+      if (Number.isFinite(millis) && millis > 0) {
+        return new Date(millis).toISOString().slice(0, 10);
+      }
+
+      return "-";
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
     }
 
     loadRanking();
