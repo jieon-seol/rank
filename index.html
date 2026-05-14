@@ -230,8 +230,9 @@
           });
         });
 
-        renderRanking(rows);
-        statusEl.textContent = `Loaded ${rows.length} submissions`;
+        const uniqueRows = dedupeRows(rows);
+        renderRanking(uniqueRows);
+        statusEl.textContent = `Loaded ${uniqueRows.length} submissions`;
         statusEl.classList.remove("error");
       } catch (error) {
         console.error(error);
@@ -258,6 +259,26 @@
           <td>${escapeHtml(formatDate(row.timestamp, row.timestamp_ms))}</td>
         </tr>
       `).join("");
+    }
+
+    function dedupeRows(rows) {
+      const seen = new Set();
+      const unique = [];
+
+      for (const row of rows) {
+        const key = `${row.uid || ""}|${stableScore(row.score)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        unique.push(row);
+      }
+
+      return unique;
+    }
+
+    function stableScore(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return "";
+      return number.toFixed(6);
     }
 
     function setLoading(isLoading) {
