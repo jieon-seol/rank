@@ -1,0 +1,100 @@
+{
+  "soc": {
+    "sm8650": {
+      "name": "Snapdragon 8 Gen 3",
+      "manufacturer": "Qualcomm"
+    },
+    "sm8550": {
+      "name": "Snapdragon 8 Gen 2",
+      "manufacturer": "Qualcomm"
+    },
+    "sm8475": {
+      "name": "Snapdragon 8+ Gen 1",
+      "manufacturer": "Qualcomm"
+    },
+    "sm8450": {
+      "name": "Snapdragon 8 Gen 1",
+      "manufacturer": "Qualcomm"
+    },
+    "sm8350": {
+      "name": "Snapdragon 888",
+      "manufacturer": "Qualcomm"
+    },
+    "sm8250": {
+      "name": "Snapdragon 865",
+      "manufacturer": "Qualcomm"
+    },
+    "mt6989": {
+      "name": "Dimensity 9300",
+      "manufacturer": "MediaTek"
+    },
+    "mt6985": {
+      "name": "Dimensity 9200",
+      "manufacturer": "MediaTek"
+    },
+    "mt6897": {
+      "name": "Dimensity 8300",
+      "manufacturer": "MediaTek"
+    },
+    "exynos2400": {
+      "name": "Exynos 2400",
+      "manufacturer": "Samsung"
+    },
+    "exynos2200": {
+      "name": "Exynos 2200",
+      "manufacturer": "Samsung"
+    },
+    "gs201": {
+      "name": "Google Tensor G2",
+      "manufacturer": "Google"
+    },
+    "zuma": {
+      "name": "Google Tensor G3",
+      "manufacturer": "Google"
+    },
+    "zumapro": {
+      "name": "Google Tensor G4",
+      "manufacturer": "Google"
+    }
+  },
+  "storage": {
+    "modelContains": [
+      {
+        "contains": "ufs",
+        "type": "UFS"
+      },
+      {
+        "contains": "kludg4uhdc",
+        "type": "UFS 2.x"
+      },
+      {
+        "contains": "klueg8uhdb",
+        "type": "UFS 3.x"
+      },
+      {
+        "contains": "klufg8rhda",
+        "type": "UFS 3.x"
+      },
+      {
+        "contains": "klujg8uhdc",
+        "type": "UFS 4.x"
+      },
+      {
+        "contains": "thgaf",
+        "type": "UFS"
+      },
+      {
+        "contains": "h9hq",
+        "type": "UFS"
+      },
+      {
+        "contains": "mmc",
+        "type": "eMMC"
+      },
+      {
+        "contains": "emmc",
+        "type": "eMMC"
+      }
+    ]
+  }
+}

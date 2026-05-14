@@ -64,8 +64,19 @@
 
     .actions {
       display: flex;
+      gap: 10px;
       justify-content: flex-end;
       margin-bottom: 12px;
+    }
+
+    select {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 14px;
+      min-width: 220px;
+      padding: 9px 12px;
     }
 
     button {
@@ -93,7 +104,7 @@
 
     table {
       width: 100%;
-      min-width: 620px;
+      min-width: 960px;
       border-collapse: collapse;
     }
 
@@ -161,6 +172,9 @@
 
   <main class="wrap">
     <div class="actions">
+      <select id="jobSelect" aria-label="Ranking target">
+        <option value="overall">Overall</option>
+      </select>
       <button id="refreshBtn" type="button">Refresh</button>
     </div>
 
@@ -169,15 +183,17 @@
         <thead>
           <tr>
             <th class="rank">Rank</th>
-            <th>Model</th>
             <th>Device</th>
+            <th>AP</th>
+            <th>RAM</th>
+            <th>Storage</th>
             <th>Score</th>
             <th>Date</th>
           </tr>
         </thead>
         <tbody id="rankingBody">
           <tr>
-            <td colspan="5" class="muted">Loading ranking data...</td>
+            <td colspan="7" class="muted">Loading ranking data...</td>
           </tr>
         </tbody>
       </table>
@@ -185,43 +201,31 @@
   </main>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      getDocs,
-      limit,
-      orderBy,
-      query,
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDWoXWLjt9Y0GtnVJ902Sj3zlhOcewebPI",
-      authDomain: "ffff-30cb6.firebaseapp.com",
-      projectId: "ffff-30cb6",
-    };
-    const RESULTS_COLLECTION = "verified_results";
     const RESULT_LIMIT = 100;
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const CATALOG_URL = "device_catalog.json";
+    const JOB_CATALOG_URL = "job_catalog.json";
+    const LEADERBOARD_URL = "https://us-central1-ffff-30cb6.cloudfunctions.net/leaderboard";
 
     const statusEl = document.getElementById("status");
     const rankingBody = document.getElementById("rankingBody");
     const refreshBtn = document.getElementById("refreshBtn");
+    const jobSelect = document.getElementById("jobSelect");
+    let deviceCatalog = { soc: {}, storage: { modelContains: [] } };
 
     refreshBtn.addEventListener("click", loadRanking);
+    jobSelect.addEventListener("change", loadRanking);
 
     async function loadRanking() {
       setLoading(true);
 
       try {
+        await ensureCatalogs();
         const uniqueRows = dedupeRows(await fetchRankingRows());
         renderRanking(uniqueRows);
-        setStatus(`Loaded ${uniqueRows.length} submissions`, false);
+        setStatus(`Loaded ${uniqueRows.length} ${rankingLabel()} submissions`, false);
       } catch (error) {
         console.error(error);
-        rankingBody.innerHTML = `<tr><td colspan="5" class="error">${escapeHtml(error.message)}</td></tr>`;
+        rankingBody.innerHTML = `<tr><td colspan="7" class="error">${escapeHtml(error.message)}</td></tr>`;
         setStatus("Load failed", true);
       } finally {
         setLoading(false);
@@ -229,36 +233,38 @@
     }
 
     async function fetchRankingRows() {
-      const rankingQuery = query(
-        collection(db, RESULTS_COLLECTION),
-        orderBy("score", "desc"),
-        limit(RESULT_LIMIT),
-      );
-      const snapshot = await getDocs(rankingQuery);
-      const rows = [];
-
-      snapshot.forEach((doc) => {
-        rows.push({
-          id: doc.id,
-          ...doc.data(),
-        });
+      const params = new URLSearchParams({
+        limit: String(RESULT_LIMIT),
+        type: selectedType(),
       });
+      if (selectedType() === "job") {
+        params.set("jobName", jobSelect.value);
+      }
 
-      return rows;
+      const response = await fetch(`${LEADERBOARD_URL}?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const body = await response.json();
+      if (!response.ok || !body.ok) {
+        throw new Error(body.message || body.error || `leaderboard http=${response.status}`);
+      }
+      return body.results || [];
     }
 
     function renderRanking(rows) {
       if (!rows.length) {
-        rankingBody.innerHTML = `<tr><td colspan="5" class="muted">No submissions yet.</td></tr>`;
+        rankingBody.innerHTML = `<tr><td colspan="7" class="muted">No ${escapeHtml(rankingLabel())} submissions yet.</td></tr>`;
         return;
       }
 
       rankingBody.innerHTML = rows.map((row, index) => `
         <tr>
           <td class="rank">${index + 1}</td>
-          <td>${escapeHtml(row.model || "-")}</td>
-          <td>${escapeHtml(row.device || "-")}</td>
-          <td class="score">${formatScore(row.score)}</td>
+          <td>${escapeHtml(deviceLabel(row))}</td>
+          <td>${escapeHtml(apLabel(row.deviceInfo))}</td>
+          <td>${escapeHtml(memoryLabel(row.deviceInfo))}</td>
+          <td>${escapeHtml(storageLabel(row.deviceInfo))}</td>
+          <td class="score">${escapeHtml(metricLabel(row))}</td>
           <td>${escapeHtml(formatDate(row.timestamp, row.timestamp_ms))}</td>
         </tr>
       `).join("");
@@ -282,6 +288,123 @@
       const number = Number(value);
       if (!Number.isFinite(number)) return "";
       return number.toFixed(6);
+    }
+
+    async function fetchDeviceCatalog() {
+      try {
+        const response = await fetch(CATALOG_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error(`catalog http=${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.warn("device catalog unavailable", error);
+        return { soc: {}, storage: { modelContains: [] } };
+      }
+    }
+
+    async function ensureCatalogs() {
+      if (!deviceCatalog.loaded) {
+        deviceCatalog = await fetchDeviceCatalog();
+        deviceCatalog.loaded = true;
+      }
+      if (jobSelect.options.length <= 1) {
+        await loadJobOptions();
+      }
+    }
+
+    async function loadJobOptions() {
+      const response = await fetch(JOB_CATALOG_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`job catalog http=${response.status}`);
+      const jobs = await response.json();
+
+      for (const job of jobs) {
+        const option = document.createElement("option");
+        option.value = job.test_name;
+        option.textContent = `${job.test_name} (${Number(job.weight || 0).toFixed(2)})`;
+        jobSelect.appendChild(option);
+      }
+    }
+
+    function selectedType() {
+      return jobSelect.value === "overall" ? "overall" : "job";
+    }
+
+    function rankingLabel() {
+      return selectedType() === "overall" ? "overall" : jobSelect.value;
+    }
+
+    function deviceLabel(row) {
+      return row.deviceInfo?.display?.deviceLabel
+        || row.deviceInfo?.model
+        || row.model
+        || "-";
+    }
+
+    function apLabel(deviceInfo) {
+      const ap = deviceInfo?.ap || {};
+      const mapped = mapSoc(ap.socModel || ap.boardPlatform || ap.hardware);
+      return deviceInfo?.display?.apName
+        || mapped?.name
+        || ap.socName
+        || ap.socModel
+        || ap.boardPlatform
+        || ap.hardware
+        || "-";
+    }
+
+    function memoryLabel(deviceInfo) {
+      const memory = deviceInfo?.memory || {};
+      if (deviceInfo?.display?.ram) return deviceInfo.display.ram;
+      if (memory.totalGBRounded) return `${memory.totalGBRounded}GB RAM`;
+      return "-";
+    }
+
+    function storageLabel(deviceInfo) {
+      const storage = deviceInfo?.storage || {};
+      if (deviceInfo?.display?.storage) return deviceInfo.display.storage;
+
+      const mappedType = mapStorage(storage.model, storage.vendor, storage.blockName);
+      const type = mappedType || storage.type || "";
+      const size = storage.totalGBRounded ? `${storage.totalGBRounded}GB` : "";
+      return [type, size].filter(Boolean).join(" ") || "-";
+    }
+
+    function metricLabel(row) {
+      if (selectedType() === "job") {
+        const bw = Number(row.bw || row.score);
+        const iops = Number(row.iops || 0);
+        const bwText = Number.isFinite(bw) ? `${Math.round(bw).toLocaleString("en-US")} MB/s` : "-";
+        const iopsText = Number.isFinite(iops) && iops > 0
+          ? ` / ${Math.round(iops).toLocaleString("en-US")} IOPS`
+          : "";
+        return `${bwText}${iopsText}`;
+      }
+      return formatScore(row.score);
+    }
+
+    function mapSoc(value) {
+      const key = normalizeKey(value);
+      if (!key) return null;
+      if (deviceCatalog.soc?.[key]) return deviceCatalog.soc[key];
+
+      for (const [catalogKey, entry] of Object.entries(deviceCatalog.soc || {})) {
+        if (key.includes(catalogKey)) return entry;
+      }
+
+      return null;
+    }
+
+    function mapStorage(...values) {
+      const text = values.filter(Boolean).join(" ").toLowerCase();
+      for (const rule of deviceCatalog.storage?.modelContains || []) {
+        if (rule.contains && text.includes(String(rule.contains).toLowerCase())) {
+          return rule.type;
+        }
+      }
+      return "";
+    }
+
+    function normalizeKey(value) {
+      return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
     }
 
     function setLoading(isLoading) {

@@ -1,0 +1,14 @@
+[
+  {"test_name": "p1_sr.fio", "weight": 0.15},
+  {"test_name": "p2_sw.fio", "weight": 0.15},
+  {"test_name": "p3_rr.fio", "weight": 0.15},
+  {"test_name": "p4_rw.fio", "weight": 0.15},
+  {"test_name": "p5_1bpw.fio", "weight": 0},
+  {"test_name": "p5_2rwrr.fio", "weight": 0.15},
+  {"test_name": "p6_1bpw.fio", "weight": 0},
+  {"test_name": "p6_2rwrr.fio", "weight": 0.05},
+  {"test_name": "p7_1bpw.fio", "weight": 0},
+  {"test_name": "p7_2rr.fio", "weight": 0.15},
+  {"test_name": "p8_1bpw.fio", "weight": 0},
+  {"test_name": "p8_2rr.fio", "weight": 0.05}
+]
