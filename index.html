@@ -215,7 +215,7 @@
 
       try {
         const rankingQuery = query(
-          collection(db, "fio_results"),
+          collection(db, "verified_results"),
           orderBy("score", "desc"),
           limit(100),
         );
