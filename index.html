@@ -200,6 +200,8 @@
       authDomain: "ffff-30cb6.firebaseapp.com",
       projectId: "ffff-30cb6",
     };
+    const RESULTS_COLLECTION = "verified_results";
+    const RESULT_LIMIT = 100;
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -214,34 +216,35 @@
       setLoading(true);
 
       try {
-        const rankingQuery = query(
-          collection(db, "verified_results"),
-          orderBy("score", "desc"),
-          limit(100),
-        );
-
-        const snapshot = await getDocs(rankingQuery);
-        const rows = [];
-
-        snapshot.forEach((doc) => {
-          rows.push({
-            id: doc.id,
-            ...doc.data(),
-          });
-        });
-
-        const uniqueRows = dedupeRows(rows);
+        const uniqueRows = dedupeRows(await fetchRankingRows());
         renderRanking(uniqueRows);
-        statusEl.textContent = `Loaded ${uniqueRows.length} submissions`;
-        statusEl.classList.remove("error");
+        setStatus(`Loaded ${uniqueRows.length} submissions`, false);
       } catch (error) {
         console.error(error);
         rankingBody.innerHTML = `<tr><td colspan="5" class="error">${escapeHtml(error.message)}</td></tr>`;
-        statusEl.textContent = "Load failed";
-        statusEl.classList.add("error");
+        setStatus("Load failed", true);
       } finally {
         setLoading(false);
       }
+    }
+
+    async function fetchRankingRows() {
+      const rankingQuery = query(
+        collection(db, RESULTS_COLLECTION),
+        orderBy("score", "desc"),
+        limit(RESULT_LIMIT),
+      );
+      const snapshot = await getDocs(rankingQuery);
+      const rows = [];
+
+      snapshot.forEach((doc) => {
+        rows.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+
+      return rows;
     }
 
     function renderRanking(rows) {
@@ -284,9 +287,13 @@
     function setLoading(isLoading) {
       refreshBtn.disabled = isLoading;
       if (isLoading) {
-        statusEl.textContent = "Loading...";
-        statusEl.classList.remove("error");
+        setStatus("Loading...", false);
       }
+    }
+
+    function setStatus(text, isError) {
+      statusEl.textContent = text;
+      statusEl.classList.toggle("error", isError);
     }
 
     function formatScore(value) {
