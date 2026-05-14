@@ -77,6 +77,36 @@
       margin-bottom: 12px;
     }
 
+    .dropdown-filters {
+      align-items: end;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin: 0 0 12px;
+    }
+
+    .dropdown-filter {
+      display: grid;
+      gap: 4px;
+    }
+
+    .dropdown-filter label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .dropdown-filter select {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 14px;
+      min-width: 0;
+      padding: 8px 10px;
+      width: 100%;
+    }
+
     .tabs {
       display: flex;
       flex-wrap: wrap;
@@ -355,6 +385,10 @@
       .status {
         text-align: left;
       }
+
+      .dropdown-filters {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -446,6 +480,24 @@
       <div id="tabs" class="tabs" role="tablist" aria-label="Ranking target"></div>
       <button id="refreshBtn" type="button">Refresh</button>
     </div>
+    <div id="dropdownFilters" class="dropdown-filters">
+      <div class="dropdown-filter">
+        <label for="deviceFilter">Device</label>
+        <select id="deviceFilter" data-filter-select="device"></select>
+      </div>
+      <div class="dropdown-filter">
+        <label for="apFilter">AP</label>
+        <select id="apFilter" data-filter-select="ap"></select>
+      </div>
+      <div class="dropdown-filter">
+        <label for="ramFilter">RAM</label>
+        <select id="ramFilter" data-filter-select="ram"></select>
+      </div>
+      <div class="dropdown-filter">
+        <label for="storageFilter">Storage</label>
+        <select id="storageFilter" data-filter-select="storage"></select>
+      </div>
+    </div>
     <div id="filterBar" class="filter-bar">
       <span id="filterChips" class="filter-chips"></span>
       <button id="clearFilterBtn" class="clear-filter" type="button">Clear</button>
@@ -485,6 +537,7 @@
     const filterBar = document.getElementById("filterBar");
     const filterChips = document.getElementById("filterChips");
     const clearFilterBtn = document.getElementById("clearFilterBtn");
+    const filterSelects = document.querySelectorAll("[data-filter-select]");
     let deviceCatalog = { soc: {}, storage: { modelContains: [] } };
     let currentTarget = { type: "overall", jobName: "" };
     let currentFilters = {};
@@ -494,6 +547,17 @@
       currentFilters = {};
       renderCurrentRows();
     });
+    for (const select of filterSelects) {
+      select.addEventListener("change", () => {
+        const field = select.dataset.filterSelect;
+        if (select.value) {
+          currentFilters[field] = select.value;
+        } else {
+          delete currentFilters[field];
+        }
+        renderCurrentRows();
+      });
+    }
 
     let currentRows = [];
 
@@ -534,6 +598,7 @@
     }
 
     function renderCurrentRows() {
+      renderDropdownFilters();
       renderFilter();
       renderRanking(filteredRows());
       setStatus(`Loaded ${filteredRows().length} ${rankingLabel()} submissions`, false);
@@ -724,14 +789,49 @@
 
     function filterValue(row, field) {
       if (field === "device") return deviceLabel(row);
+      if (field === "ap") return apLabel(row.deviceInfo);
+      if (field === "ram") return memoryLabel(row.deviceInfo);
       if (field === "spec") return specLabel(row.deviceInfo);
       if (field === "storage") return storageLabel(row.deviceInfo);
       return "";
     }
 
     function filterLabel(field) {
+      if (field === "ap") return "AP";
+      if (field === "ram") return "RAM";
       if (field === "spec") return "AP / RAM";
       return field.charAt(0).toUpperCase() + field.slice(1);
+    }
+
+    function renderDropdownFilters() {
+      for (const select of filterSelects) {
+        const field = select.dataset.filterSelect;
+        const selectedValue = currentFilters[field] || "";
+        const values = uniqueFilterValues(field);
+
+        if (selectedValue && !values.includes(selectedValue)) {
+          values.unshift(selectedValue);
+        }
+
+        select.innerHTML = [
+          `<option value="">All ${escapeHtml(filterLabel(field))}</option>`,
+          ...values.map((value) =>
+            `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`
+          ),
+        ].join("");
+        select.value = selectedValue;
+      }
+    }
+
+    function uniqueFilterValues(field) {
+      const values = new Set();
+      for (const row of currentRows) {
+        const value = filterValue(row, field);
+        if (value && value !== "-") {
+          values.add(value);
+        }
+      }
+      return Array.from(values).sort((a, b) => a.localeCompare(b));
     }
 
     function renderFilter() {
