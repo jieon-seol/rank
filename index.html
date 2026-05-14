@@ -58,25 +58,45 @@
       text-align: right;
     }
 
+    .status-wrap {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
     main {
       padding: 24px 0 40px;
     }
 
-    .actions {
+    .controls {
+      align-items: center;
       display: flex;
       gap: 10px;
-      justify-content: flex-end;
+      justify-content: space-between;
       margin-bottom: 12px;
     }
 
-    select {
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tab {
       border: 1px solid var(--line);
       border-radius: 6px;
       background: var(--panel);
       color: var(--text);
       font-size: 14px;
-      min-width: 220px;
-      padding: 9px 12px;
+      font-weight: 700;
+      padding: 8px 10px;
+    }
+
+    .tab.active {
+      border-color: var(--accent-dark);
+      background: var(--accent);
+      color: #ffffff;
     }
 
     button {
@@ -93,6 +113,120 @@
     button:disabled {
       cursor: wait;
       opacity: 0.65;
+    }
+
+    .filter-bar {
+      align-items: center;
+      display: none;
+      gap: 8px;
+      margin: 0 0 12px;
+    }
+
+    .filter-bar.active {
+      display: flex;
+    }
+
+    .filter-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .filter-chip {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #eef2f6;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 7px 9px;
+    }
+
+    .clear-filter {
+      border-color: var(--line);
+      background: var(--panel);
+      color: var(--text);
+      padding: 7px 9px;
+    }
+
+    .help {
+      position: relative;
+    }
+
+    .help-button {
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: var(--panel);
+      color: var(--accent-dark);
+      display: inline-flex;
+      font-size: 15px;
+      font-weight: 700;
+      height: 36px;
+      justify-content: center;
+      padding: 0;
+      width: 36px;
+    }
+
+    .help-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 12px 32px rgba(24, 32, 42, 0.18);
+      color: var(--text);
+      display: none;
+      font-size: 13px;
+      line-height: 1.45;
+      max-height: min(70vh, 620px);
+      overflow: auto;
+      padding: 14px;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      width: min(520px, calc(100vw - 32px));
+      z-index: 10;
+    }
+
+    .help:hover .help-panel,
+    .help:focus-within .help-panel {
+      display: block;
+    }
+
+    .help-panel h2 {
+      font-size: 15px;
+      line-height: 1.3;
+      margin: 0 0 10px;
+    }
+
+    .help-panel h3 {
+      border-top: 1px solid var(--line);
+      font-size: 13px;
+      margin: 12px 0 6px;
+      padding-top: 10px;
+    }
+
+    .help-panel h3:first-of-type {
+      border-top: 0;
+      margin-top: 0;
+      padding-top: 0;
+    }
+
+    .help-panel dl {
+      display: grid;
+      gap: 4px 10px;
+      grid-template-columns: 96px 1fr;
+      margin: 0;
+    }
+
+    .help-panel dt {
+      color: #334155;
+      font-family: monospace;
+      font-weight: 700;
+    }
+
+    .help-panel dd {
+      margin: 0;
+      white-space: normal;
     }
 
     .table-panel {
@@ -141,6 +275,68 @@
       font-weight: 700;
     }
 
+    .filter-cell {
+      align-items: center;
+      display: inline-flex;
+      gap: 6px;
+      position: relative;
+    }
+
+    .cell-menu-button {
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 16px;
+      height: 24px;
+      line-height: 1;
+      padding: 0;
+      width: 24px;
+    }
+
+    .cell-menu-button:hover,
+    .cell-menu-button:focus {
+      border-color: var(--line);
+      background: #eef2f6;
+      color: var(--text);
+    }
+
+    .cell-menu {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel);
+      box-shadow: 0 10px 24px rgba(24, 32, 42, 0.16);
+      display: none;
+      min-width: 160px;
+      padding: 4px;
+      position: absolute;
+      right: 0;
+      top: 28px;
+      z-index: 8;
+    }
+
+    .cell-menu.open {
+      display: block;
+    }
+
+    .cell-menu button {
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text);
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 10px;
+      text-align: left;
+      width: 100%;
+    }
+
+    .cell-menu button:hover,
+    .cell-menu button:focus {
+      background: #eef2f6;
+    }
+
     .muted {
       color: var(--muted);
     }
@@ -166,16 +362,93 @@
   <header>
     <div class="wrap topbar">
       <h1>FIO App Ranking</h1>
-      <div id="status" class="status">Loading...</div>
+      <div class="status-wrap">
+        <div id="status" class="status">Loading...</div>
+        <div class="help">
+          <button class="help-button" type="button" aria-label="Help">?</button>
+          <div class="help-panel" role="tooltip">
+          <h2>Job Options</h2>
+          <h3>Common</h3>
+          <dl>
+            <dt>direct=1</dt><dd>Bypasses the OS page cache so storage behavior is measured more directly.</dd>
+            <dt>group_reporting</dt><dd>Reports grouped results when a job uses multiple workers.</dd>
+            <dt>filename</dt><dd>Target file path used by the fio job under <code>/data/fio</code>.</dd>
+            <dt>unlink=1</dt><dd>Removes the target file after the job completes.</dd>
+          </dl>
+          <h3>p1_sr.fio</h3>
+          <dl>
+            <dt>rw=read</dt><dd>Sequential read test.</dd>
+            <dt>bs=512k</dt><dd>Uses 512 KiB block size.</dd>
+            <dt>size=1536m</dt><dd>Transfers 1536 MiB.</dd>
+            <dt>numjobs=1</dt><dd>Runs one worker.</dd>
+          </dl>
+          <h3>p2_sw.fio</h3>
+          <dl>
+            <dt>rw=write</dt><dd>Sequential write test.</dd>
+            <dt>bs=512k</dt><dd>Uses 512 KiB block size.</dd>
+            <dt>size=1536m</dt><dd>Transfers 1536 MiB.</dd>
+            <dt>numjobs=1</dt><dd>Runs one worker.</dd>
+          </dl>
+          <h3>p3_rr.fio</h3>
+          <dl>
+            <dt>rw=randread</dt><dd>Random read test.</dd>
+            <dt>bs=4k</dt><dd>Uses 4 KiB random I/O blocks.</dd>
+            <dt>numjobs=8</dt><dd>Runs eight workers.</dd>
+            <dt>filesize=1024M</dt><dd>Uses a 1024 MiB backing file.</dd>
+          </dl>
+          <h3>p4_rw.fio</h3>
+          <dl>
+            <dt>rw=randwrite</dt><dd>Random write test.</dd>
+            <dt>bs=4k</dt><dd>Uses 4 KiB random I/O blocks.</dd>
+            <dt>numjobs=8</dt><dd>Runs eight workers.</dd>
+            <dt>stonewall</dt><dd>Starts this job only after previous jobs finish.</dd>
+          </dl>
+          <h3>p5_rwrr.fio</h3>
+          <dl>
+            <dt>p5_0bpw</dt><dd>Prepares the 128 MiB backing file with sequential 512 KiB writes before the mixed random test.</dd>
+            <dt>rw=randrw</dt><dd>Mixed random read/write test.</dd>
+            <dt>bssplit</dt><dd>Uses weighted random block sizes, mainly 4 KiB with larger blocks mixed in.</dd>
+            <dt>numjobs=8</dt><dd>Runs eight workers.</dd>
+            <dt>size=32m</dt><dd>Transfers 32 MiB per worker group.</dd>
+          </dl>
+          <h3>p6_rwrr.fio</h3>
+          <dl>
+            <dt>p6_0bpw</dt><dd>Prepares the 128 MiB backing file with sequential 512 KiB writes before the mixed random test.</dd>
+            <dt>rw=randrw</dt><dd>Mixed random read/write test.</dd>
+            <dt>bssplit</dt><dd>Uses weighted random block sizes, mainly 4 KiB with larger blocks mixed in.</dd>
+            <dt>numjobs=8</dt><dd>Runs eight workers.</dd>
+            <dt>size=64m</dt><dd>Transfers 64 MiB per worker group.</dd>
+          </dl>
+          <h3>p7_rr.fio</h3>
+          <dl>
+            <dt>p7_0bpw</dt><dd>Prepares the 8192 MiB backing file with sequential 512 KiB writes before the random read test.</dd>
+            <dt>rw=randread</dt><dd>Random read test on the large prepared file.</dd>
+            <dt>bs=4k</dt><dd>Uses 4 KiB random I/O blocks.</dd>
+            <dt>numjobs=8</dt><dd>Runs eight workers.</dd>
+            <dt>size=128m</dt><dd>Transfers 128 MiB.</dd>
+          </dl>
+          <h3>p8_rr.fio</h3>
+          <dl>
+            <dt>p8_0bpw</dt><dd>Prepares the 8192 MiB backing file with a weighted mixed block-size write pattern.</dd>
+            <dt>rw=randread</dt><dd>Random read test on the prepared mixed-block file.</dd>
+            <dt>bs=4k</dt><dd>Uses 4 KiB random I/O blocks.</dd>
+            <dt>numjobs=8</dt><dd>Runs eight workers.</dd>
+            <dt>io_size=128m</dt><dd>Limits total I/O to 128 MiB.</dd>
+          </dl>
+        </div>
+      </div>
+      </div>
     </div>
   </header>
 
   <main class="wrap">
-    <div class="actions">
-      <select id="jobSelect" aria-label="Ranking target">
-        <option value="overall">Overall</option>
-      </select>
+    <div class="controls">
+      <div id="tabs" class="tabs" role="tablist" aria-label="Ranking target"></div>
       <button id="refreshBtn" type="button">Refresh</button>
+    </div>
+    <div id="filterBar" class="filter-bar">
+      <span id="filterChips" class="filter-chips"></span>
+      <button id="clearFilterBtn" class="clear-filter" type="button">Clear</button>
     </div>
 
     <section class="table-panel">
@@ -184,8 +457,7 @@
           <tr>
             <th class="rank">Rank</th>
             <th>Device</th>
-            <th>AP</th>
-            <th>RAM</th>
+            <th>AP / RAM</th>
             <th>Storage</th>
             <th>Score</th>
             <th>Date</th>
@@ -209,20 +481,30 @@
     const statusEl = document.getElementById("status");
     const rankingBody = document.getElementById("rankingBody");
     const refreshBtn = document.getElementById("refreshBtn");
-    const jobSelect = document.getElementById("jobSelect");
+    const tabsEl = document.getElementById("tabs");
+    const filterBar = document.getElementById("filterBar");
+    const filterChips = document.getElementById("filterChips");
+    const clearFilterBtn = document.getElementById("clearFilterBtn");
     let deviceCatalog = { soc: {}, storage: { modelContains: [] } };
+    let currentTarget = { type: "overall", jobName: "" };
+    let currentFilters = {};
 
     refreshBtn.addEventListener("click", loadRanking);
-    jobSelect.addEventListener("change", loadRanking);
+    clearFilterBtn.addEventListener("click", () => {
+      currentFilters = {};
+      renderCurrentRows();
+    });
+
+    let currentRows = [];
 
     async function loadRanking() {
       setLoading(true);
 
       try {
         await ensureCatalogs();
-        const uniqueRows = dedupeRows(await fetchRankingRows());
-        renderRanking(uniqueRows);
-        setStatus(`Loaded ${uniqueRows.length} ${rankingLabel()} submissions`, false);
+        currentRows = dedupeRows(await fetchRankingRows());
+        renderCurrentRows();
+        setStatus(`Loaded ${filteredRows().length} ${rankingLabel()} submissions`, false);
       } catch (error) {
         console.error(error);
         rankingBody.innerHTML = `<tr><td colspan="7" class="error">${escapeHtml(error.message)}</td></tr>`;
@@ -235,10 +517,10 @@
     async function fetchRankingRows() {
       const params = new URLSearchParams({
         limit: String(RESULT_LIMIT),
-        type: selectedType(),
+        type: currentTarget.type,
       });
-      if (selectedType() === "job") {
-        params.set("jobName", jobSelect.value);
+      if (currentTarget.type === "job") {
+        params.set("jobName", currentTarget.jobName);
       }
 
       const response = await fetch(`${LEADERBOARD_URL}?${params.toString()}`, {
@@ -251,6 +533,20 @@
       return body.results || [];
     }
 
+    function renderCurrentRows() {
+      renderFilter();
+      renderRanking(filteredRows());
+      setStatus(`Loaded ${filteredRows().length} ${rankingLabel()} submissions`, false);
+    }
+
+    function filteredRows() {
+      const activeFilters = Object.entries(currentFilters);
+      if (!activeFilters.length) return currentRows;
+      return currentRows.filter((row) =>
+        activeFilters.every(([field, value]) => filterValue(row, field) === value)
+      );
+    }
+
     function renderRanking(rows) {
       if (!rows.length) {
         rankingBody.innerHTML = `<tr><td colspan="7" class="muted">No ${escapeHtml(rankingLabel())} submissions yet.</td></tr>`;
@@ -260,14 +556,29 @@
       rankingBody.innerHTML = rows.map((row, index) => `
         <tr>
           <td class="rank">${index + 1}</td>
-          <td>${escapeHtml(deviceLabel(row))}</td>
-          <td>${escapeHtml(apLabel(row.deviceInfo))}</td>
-          <td>${escapeHtml(memoryLabel(row.deviceInfo))}</td>
-          <td>${escapeHtml(storageLabel(row.deviceInfo))}</td>
+          <td>${filterCell("device", deviceLabel(row), index)}</td>
+          <td>${filterCell("spec", specLabel(row.deviceInfo), index)}</td>
+          <td>${filterCell("storage", storageLabel(row.deviceInfo), index)}</td>
           <td class="score">${escapeHtml(metricLabel(row))}</td>
           <td>${escapeHtml(formatDate(row.timestamp, row.timestamp_ms))}</td>
         </tr>
       `).join("");
+    }
+
+    function filterCell(field, value, rowIndex) {
+      const safeValue = escapeHtml(value || "-");
+      const safeField = escapeHtml(field);
+      const encodedValue = encodeURIComponent(value || "-");
+      const menuId = `${field}-${rowIndex}`;
+      return `
+        <span class="filter-cell">
+          <span>${safeValue}</span>
+          <button class="cell-menu-button" type="button" data-menu-id="${menuId}" data-menu-field="${safeField}" data-menu-value="${encodedValue}" aria-label="Filter ${safeField}">⋮</button>
+          <span class="cell-menu" data-menu-id="${menuId}">
+            <button type="button" data-filter-field="${safeField}" data-filter-value="${encodedValue}">Show only this</button>
+          </span>
+        </span>
+      `;
     }
 
     function dedupeRows(rows) {
@@ -306,7 +617,7 @@
         deviceCatalog = await fetchDeviceCatalog();
         deviceCatalog.loaded = true;
       }
-      if (jobSelect.options.length <= 1) {
+      if (!tabsEl.children.length) {
         await loadJobOptions();
       }
     }
@@ -315,21 +626,45 @@
       const response = await fetch(JOB_CATALOG_URL, { cache: "no-store" });
       if (!response.ok) throw new Error(`job catalog http=${response.status}`);
       const jobs = await response.json();
+      tabsEl.appendChild(tabButton("Overall", "overall", ""));
 
       for (const job of jobs) {
-        const option = document.createElement("option");
-        option.value = job.test_name;
-        option.textContent = `${job.test_name} (${Number(job.weight || 0).toFixed(2)})`;
-        jobSelect.appendChild(option);
+        if (Number(job.weight || 0) <= 0) continue;
+        tabsEl.appendChild(tabButton(tabLabel(job.test_name), "job", job.test_name));
       }
     }
 
-    function selectedType() {
-      return jobSelect.value === "overall" ? "overall" : "job";
+    function tabButton(label, type, jobName) {
+      const button = document.createElement("button");
+      button.className = `tab${type === currentTarget.type && jobName === currentTarget.jobName ? " active" : ""}`;
+      button.type = "button";
+      button.role = "tab";
+      button.dataset.type = type;
+      button.dataset.jobName = jobName;
+      button.textContent = label;
+      button.addEventListener("click", () => {
+        currentTarget = { type, jobName };
+        updateTabs();
+        loadRanking();
+      });
+      return button;
+    }
+
+    function updateTabs() {
+      for (const button of tabsEl.querySelectorAll(".tab")) {
+        const active = button.dataset.type === currentTarget.type
+          && button.dataset.jobName === currentTarget.jobName;
+        button.classList.toggle("active", active);
+      }
+    }
+
+    function tabLabel(jobName) {
+      const match = String(jobName || "").match(/^p(\d+)/);
+      return match ? `P${match[1]}` : jobName;
     }
 
     function rankingLabel() {
-      return selectedType() === "overall" ? "overall" : jobSelect.value;
+      return currentTarget.type === "overall" ? "overall" : currentTarget.jobName;
     }
 
     function deviceLabel(row) {
@@ -368,8 +703,14 @@
       return [type, size].filter(Boolean).join(" ") || "-";
     }
 
+    function specLabel(deviceInfo) {
+      const ap = apLabel(deviceInfo);
+      const ram = memoryLabel(deviceInfo);
+      return [ap, ram].filter((value) => value && value !== "-").join(" / ") || "-";
+    }
+
     function metricLabel(row) {
-      if (selectedType() === "job") {
+      if (currentTarget.type === "job") {
         const bw = Number(row.bw || row.score);
         const iops = Number(row.iops || 0);
         const bwText = Number.isFinite(bw) ? `${Math.round(bw).toLocaleString("en-US")} MB/s` : "-";
@@ -379,6 +720,32 @@
         return `${bwText}${iopsText}`;
       }
       return formatScore(row.score);
+    }
+
+    function filterValue(row, field) {
+      if (field === "device") return deviceLabel(row);
+      if (field === "spec") return specLabel(row.deviceInfo);
+      if (field === "storage") return storageLabel(row.deviceInfo);
+      return "";
+    }
+
+    function filterLabel(field) {
+      if (field === "spec") return "AP / RAM";
+      return field.charAt(0).toUpperCase() + field.slice(1);
+    }
+
+    function renderFilter() {
+      const activeFilters = Object.entries(currentFilters);
+      if (!activeFilters.length) {
+        filterBar.classList.remove("active");
+        filterChips.innerHTML = "";
+        return;
+      }
+
+      filterChips.innerHTML = activeFilters.map(([field, value]) =>
+        `<span class="filter-chip">${escapeHtml(filterLabel(field))}: ${escapeHtml(value)}</span>`
+      ).join("");
+      filterBar.classList.add("active");
     }
 
     function mapSoc(value) {
@@ -448,6 +815,33 @@
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
     }
+
+    document.addEventListener("click", (event) => {
+      const menuButton = event.target.closest("[data-menu-field]");
+      const filterButton = event.target.closest("[data-filter-field]");
+
+      if (menuButton) {
+        const menuId = menuButton.dataset.menuId;
+        for (const menu of document.querySelectorAll(".cell-menu")) {
+          menu.classList.toggle("open", menu.dataset.menuId === menuId && !menu.classList.contains("open"));
+        }
+        return;
+      }
+
+      if (filterButton) {
+        currentFilters[filterButton.dataset.filterField] =
+          decodeURIComponent(filterButton.dataset.filterValue);
+        for (const menu of document.querySelectorAll(".cell-menu")) {
+          menu.classList.remove("open");
+        }
+        renderCurrentRows();
+        return;
+      }
+
+      for (const menu of document.querySelectorAll(".cell-menu")) {
+        menu.classList.remove("open");
+      }
+    });
 
     loadRanking();
   </script>
