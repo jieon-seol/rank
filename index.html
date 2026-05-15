@@ -778,13 +778,24 @@
       if (currentTarget.type === "job") {
         const bw = Number(row.bw || row.score);
         const iops = Number(row.iops || 0);
-        const bwText = Number.isFinite(bw) ? `${Math.round(bw).toLocaleString("en-US")} MB/s` : "-";
+        const bwText = formatBandwidth(bw);
         const iopsText = Number.isFinite(iops) && iops > 0
           ? ` / ${Math.round(iops).toLocaleString("en-US")} IOPS`
           : "";
         return `${bwText}${iopsText}`;
       }
       return formatScore(row.score);
+    }
+
+    function formatBandwidth(kibPerSec) {
+      const number = Number(kibPerSec);
+      if (!Number.isFinite(number)) return "-";
+
+      const mbPerSec = number / 1024;
+      const maximumFractionDigits = mbPerSec < 100 ? 1 : 0;
+      return `${mbPerSec.toLocaleString("en-US", {
+        maximumFractionDigits,
+      })} MB/s`;
     }
 
     function filterValue(row, field) {
